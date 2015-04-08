@@ -1,30 +1,32 @@
-angular.module('exampleApp', [])
+angular.module('exampleApp', ['increment','ngResource'])
   .constant('baseUrl', "http://localhost:2403/products/")
-  .controller('defaultCtrl', ['$scope','$http','baseUrl', function ($scope, $http, baseUrl ) {
+  .controller('defaultCtrl', ['$scope','$http','$resource','baseUrl', function ($scope, $http, $resource, baseUrl ) {
     $scope.products = [];
     $scope.displayMode = "list";
     $scope.currentProduct = null;
 
+    $scope.productsResource = $resource(baseUrl + ":id",{id:"@id"},
+      // define a custom create action that uses post
+    {create:{method:"POST"},save:{method:"PUT"}}); // change save to use PUT since
+                                                    // post was default
+
     $scope.listProducts = function(){
-      $http.get(baseUrl).success(function (data) {
-        $scope.products = data;
-      });
+        $scope.products = $scope.productsResource.query();
     };
 
-    //$scope.deleteProduct = function (product) {
-    //  $http( {method:'DELETE', url:baseUrl + product.id}).success(function () {
-    //    $scope.products.splice($scope.products.indexOf(product), 1);
-    //  });
-    //};
-
     $scope.deleteProduct = function (product) {
-      $http.delete(baseUrl + product.id).success(function () {
-        $scope.products.splice($scope.products.indexOf(product),1);
+      product.$delete().then(function () {
+        $scope.products.splice($scope.products.indexOf(product), 1);
       });
     };
 
     $scope.createProduct = function (product) {
-      $http.post(baseUrl, product).success(function (newProduct) {
+
+      var prod = new $scope.productsResource(product);
+
+
+        //prod.$save().then(function (newProduct) {  //default save action
+        prod.$create().then(function(newProduct){  //using custom action for fun ;-)
         $scope.products.push(newProduct);
         $scope.displayMode = "list";
       });
@@ -32,20 +34,15 @@ angular.module('exampleApp', [])
 
     $scope.updateProduct = function (product) {
       $http.put(baseUrl + product.id, product).success(function (modifiedProduct) {
-        //update the local copy
-        for (var i = 0; i < $scope.products.length; i++) {
-          if ($scope.products[i].id == modifiedProduct.id) {
-            $scope.products[i] = modifiedProduct;
-            break;
-          }
-        }
+        product.$save();
         $scope.displayMode = "list";
       });
     };
 
     $scope.editOrCreateProduct = function (product) {
       $scope.currentProduct =
-        product ? angular.copy(product) : {};
+        product ? product : {};
+      //alert("current product: " + JSON.stringify(product, null,4))
       $scope.displayMode = "edit";
     };
 
@@ -59,6 +56,9 @@ angular.module('exampleApp', [])
     };
 
     $scope.CancelEdit = function () {
+      if ($scope.currentProduct && $scope.currentProduct.$get) {
+        $scope.currentProduct.$get();
+      }
       $scope.currentProduct = {};
       $scope.displayMode = "list";
     };
