@@ -55,9 +55,10 @@ angular.module('exampleApp', ['increment','ngResource'])
       }
     };
 
-    $scope.CancelEdit = function () {
+    $scope.cancelEdit = function () {
       if ($scope.currentProduct && $scope.currentProduct.$get) {
         $scope.currentProduct.$get();
+        alert("cancelled");
       }
       $scope.currentProduct = {};
       $scope.displayMode = "list";
