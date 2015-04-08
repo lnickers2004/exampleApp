@@ -1,34 +1,46 @@
 angular.module('exampleApp', [])
-  .controller('defaultCtrl', ['$scope', function ($scope ) {
+  .constant('baseUrl', "http://localhost:2403/products/")
+  .controller('defaultCtrl', ['$scope','$http','baseUrl', function ($scope, $http, baseUrl ) {
     $scope.products = [];
     $scope.displayMode = "list";
     $scope.currentProduct = null;
 
     $scope.listProducts = function(){
-      $scope.products = [
-        {id: 0, name: "Dummy1", category: "Test", price: 1.25},
-        {id: 1, name: "Dummy1", category: "Test", price: 2.45},
-        {id: 2, name: "Dummy1", category: "Test", price: 4.25}
-      ];
+      $http.get(baseUrl).success(function (data) {
+        $scope.products = data;
+      });
     };
 
+    //$scope.deleteProduct = function (product) {
+    //  $http( {method:'DELETE', url:baseUrl + product.id}).success(function () {
+    //    $scope.products.splice($scope.products.indexOf(product), 1);
+    //  });
+    //};
+
     $scope.deleteProduct = function (product) {
-      $scope.products.splice($scope.listProducts.indexOf(product),1);
+      $http.delete(baseUrl + product.id).success(function () {
+        $scope.products.splice($scope.products.indexOf(product),1);
+      });
     };
 
     $scope.createProduct = function (product) {
-      $scope.products.push(product);
-      $scope.displayMode = "list";
+      $http.post(baseUrl, product).success(function (newProduct) {
+        $scope.products.push(newProduct);
+        $scope.displayMode = "list";
+      });
     };
 
     $scope.updateProduct = function (product) {
-      for (var i = 0; i < $scope.products.length; i++) {
-        if ($scope.products[i].id == product.id) {
-          $scope.products[i] = product;
-          break;
+      $http.put(baseUrl + product.id, product).success(function (modifiedProduct) {
+        //update the local copy
+        for (var i = 0; i < $scope.products.length; i++) {
+          if ($scope.products[i].id == modifiedProduct.id) {
+            $scope.products[i] = modifiedProduct;
+            break;
+          }
         }
-      }
-      $scope.displayMode = "list";
+        $scope.displayMode = "list";
+      });
     };
 
     $scope.editOrCreateProduct = function (product) {
