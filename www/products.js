@@ -1,6 +1,30 @@
-angular.module('exampleApp', ['increment','ngResource'])
+angular.module('exampleApp', ['increment','ngResource','ngRoute'])
   .constant('baseUrl', "http://localhost:2403/products/")
+  .config(['$routeProvider','$locationProvider',
+    function ($routeProvider, $locationProvider) {
+
+      if (window.history && history.pushState) {
+        $locationProvider.html5Mode(true);
+      }
+
+    $routeProvider.when("/list", {
+      templateUrl: "/tableView.html"
+    });
+
+    $routeProvider.when("/edit", {
+      templateUrl: "/editorView.html"
+    });
+
+    $routeProvider.when("/create", {
+      templateUrl: "/editorView.html"
+    });
+
+    $routeProvider.otherwise({
+      templateUrl: "/tableView.html"
+    });
+  }])
   .controller('defaultCtrl', ['$scope','$http','$resource','baseUrl', function ($scope, $http, $resource, baseUrl ) {
+
     $scope.products = [];
     $scope.displayMode = "list";
     $scope.currentProduct = null;
